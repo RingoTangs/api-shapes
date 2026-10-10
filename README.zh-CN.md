@@ -63,7 +63,7 @@ const error = errorSchema.parse({
 
 当字段缺省或为 `undefined` 时，`pageQuerySchema` 使用 `page: 1` 和 `pageSize: 10`。
 两个字段转换后都必须为正整数，转换遵循 `z.coerce.number()` 的行为，支持数字字符串。
-请求页大小最多为 100（`MAX_PAGE_SIZE`）。
+默认请求页大小上限为 100（`MAX_PAGE_SIZE`）。
 
 ```ts
 import type { PageQuery, PageQueryInput } from '@ringotangs/api-shapes'
@@ -86,15 +86,19 @@ const defaults = pageQuerySchema.parse({})
 import type { PageOptions } from '@ringotangs/api-shapes'
 import { createPageQuerySchema } from '@ringotangs/api-shapes'
 
-const options: PageOptions = { defaultPage: 1, defaultPageSize: 20 }
+const options: PageOptions = {
+  defaultPage: 1,
+  defaultPageSize: 20,
+  maxPageSize: 200,
+}
 const querySchema = createPageQuerySchema(options)
 
 const query = querySchema.parse({})
 // { page: 1, pageSize: 20 }
 ```
 
-两个配置项均可选，提供时必须为正整数。`defaultPageSize` 不得超过 100，
-自定义默认值不会改变请求上限。无效配置会在调用工厂时抛错。
+三个配置项均可选，提供时必须为正整数。`maxPageSize` 默认为 100，可自定义；
+`defaultPageSize` 不得超过该上限，不会自动缩减默认值。无效配置会在调用工厂时抛错。
 调整 `defaultPage` 不会改变页码最小值 1。每次调用都会创建独立的 Schema，
 可通过 `.extend()` 添加业务查询字段。
 
@@ -166,12 +170,12 @@ Schema 会在解析时移除未声明的字段。需要保留业务字段时，�
 | --------------------------------- | ------ | ------------------------------------------------------------- |
 | `DEFAULT_PAGE`                    | 常量   | 默认请求页码：`1`。                                           |
 | `DEFAULT_PAGE_SIZE`               | 常量   | 默认请求页大小：`10`。                                        |
-| `MAX_PAGE_SIZE`                   | 常量   | 固定请求页大小上限：`100`。                                   |
+| `MAX_PAGE_SIZE`                   | 常量   | 默认请求页大小上限：`100`。                                   |
 | `pageQuerySchema`                 | Schema | 使用默认配置的分页请求 Schema，支持数字转换。                 |
-| `createPageQuerySchema(options?)` | 工厂   | 使用自定义默认页码和页大小创建请求 Schema。                   |
+| `createPageQuerySchema(options?)` | 工厂   | 使用自定义默认值和页大小上限创建请求 Schema。                 |
 | `createPageSchema(itemSchema)`    | 工厂   | 创建包含 `items`、`page`、`pageSize`、`total` 的响应 Schema。 |
 | `errorSchema`                     | Schema | 包含 `code` 和 `message` 的基础错误 Schema。                  |
-| `PageOptions`                     | 类型   | 可选的 `defaultPage`、`defaultPageSize` 配置。                |
+| `PageOptions`                     | 类型   | 可选的 `defaultPage`、`defaultPageSize`、`maxPageSize` 配置。 |
 | `PageQueryInput`                  | 类型   | 默认分页请求 Schema 的输入类型。                              |
 | `PageQuery`                       | 类型   | 默认分页请求 Schema 的解析输出类型。                          |
 | `ErrorResponse`                   | 类型   | 基础错误 Schema 的解析输出类型。                              |

@@ -64,7 +64,7 @@ prefer a result with a `success` flag.
 
 `pageQuerySchema` defaults to `page: 1` and `pageSize: 10` for missing or
 `undefined` fields. Both values must resolve to positive integers. Conversion
-follows `z.coerce.number()`, including numeric strings. Request page size is limited to 100 (`MAX_PAGE_SIZE`).
+follows `z.coerce.number()`, including numeric strings. The default request page-size maximum is 100 (`MAX_PAGE_SIZE`).
 
 ```ts
 import type { PageQuery, PageQueryInput } from '@ringotangs/api-shapes'
@@ -87,15 +87,20 @@ const defaults = pageQuerySchema.parse({})
 import type { PageOptions } from '@ringotangs/api-shapes'
 import { createPageQuerySchema } from '@ringotangs/api-shapes'
 
-const options: PageOptions = { defaultPage: 1, defaultPageSize: 20 }
+const options: PageOptions = {
+  defaultPage: 1,
+  defaultPageSize: 20,
+  maxPageSize: 200,
+}
 const querySchema = createPageQuerySchema(options)
 
 const query = querySchema.parse({})
 // { page: 1, pageSize: 20 }
 ```
 
-Both options are optional and must be positive integers. `defaultPageSize`
-must not exceed 100; custom defaults do not change the request limit. Invalid configuration
+All three options are optional and must be positive integers. `maxPageSize`
+defaults to 100 and can be overridden; `defaultPageSize` must not exceed it.
+Defaults are not clamped. Invalid configuration
 throws when the factory is called. Changing `defaultPage` does not change the
 minimum page of 1. Each call creates an independent schema that supports
 `.extend()` for additional query fields.
@@ -166,19 +171,19 @@ your application; the library does not prescribe an error array format.
 
 All exports are available from `@ringotangs/api-shapes`.
 
-| API                               | Kind     | Description                                                    |
-| --------------------------------- | -------- | -------------------------------------------------------------- |
-| `DEFAULT_PAGE`                    | Constant | Default query page: `1`.                                       |
-| `DEFAULT_PAGE_SIZE`               | Constant | Default query page size: `10`.                                 |
-| `MAX_PAGE_SIZE`                   | Constant | Fixed request page-size maximum: `100`.                        |
-| `pageQuerySchema`                 | Schema   | Pagination query with default settings and number coercion.    |
-| `createPageQuerySchema(options?)` | Factory  | Query schema with custom default page and page size.           |
-| `createPageSchema(itemSchema)`    | Factory  | Response schema with `items`, `page`, `pageSize`, and `total`. |
-| `errorSchema`                     | Schema   | Base error response with `code` and `message`.                 |
-| `PageOptions`                     | Type     | Optional `defaultPage` and `defaultPageSize` settings.         |
-| `PageQueryInput`                  | Type     | Input type of the default pagination query schema.             |
-| `PageQuery`                       | Type     | Parsed output type of the default pagination query schema.     |
-| `ErrorResponse`                   | Type     | Parsed output type of the base error schema.                   |
+| API                               | Kind     | Description                                                            |
+| --------------------------------- | -------- | ---------------------------------------------------------------------- |
+| `DEFAULT_PAGE`                    | Constant | Default query page: `1`.                                               |
+| `DEFAULT_PAGE_SIZE`               | Constant | Default query page size: `10`.                                         |
+| `MAX_PAGE_SIZE`                   | Constant | Default request page-size maximum: `100`.                              |
+| `pageQuerySchema`                 | Schema   | Pagination query with default settings and number coercion.            |
+| `createPageQuerySchema(options?)` | Factory  | Query schema with custom defaults and page-size maximum.               |
+| `createPageSchema(itemSchema)`    | Factory  | Response schema with `items`, `page`, `pageSize`, and `total`.         |
+| `errorSchema`                     | Schema   | Base error response with `code` and `message`.                         |
+| `PageOptions`                     | Type     | Optional `defaultPage`, `defaultPageSize`, and `maxPageSize` settings. |
+| `PageQueryInput`                  | Type     | Input type of the default pagination query schema.                     |
+| `PageQuery`                       | Type     | Parsed output type of the default pagination query schema.             |
+| `ErrorResponse`                   | Type     | Parsed output type of the base error schema.                           |
 
 ## Development & License
 

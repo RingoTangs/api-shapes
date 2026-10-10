@@ -88,7 +88,7 @@ describe('createPageQuerySchema', () => {
     }
   })
 
-  it('uses custom defaults within the fixed page-size limit', () => {
+  it('uses custom defaults within the default page-size limit', () => {
     const schema = createPageQuerySchema({
       defaultPage: 3,
       defaultPageSize: 20,
@@ -126,19 +126,22 @@ describe('createPageQuerySchema', () => {
     expect(pageQuerySchema.parse({})).toEqual({ page: 1, pageSize: 10 })
   })
 
-  describe.each(['defaultPage', 'defaultPageSize'] as const)('%s', (field) => {
-    it.each([0, -1, 1.5, Number.NaN, Infinity, -Infinity])(
-      'rejects invalid configuration %s immediately',
-      (value) => {
-        expect(() => createPageQuerySchema({ [field]: value })).toThrow(
-          z.ZodError,
-        )
-      },
-    )
-  })
+  describe.each(['defaultPage', 'defaultPageSize', 'maxPageSize'] as const)(
+    '%s',
+    (field) => {
+      it.each([0, -1, 1.5, Number.NaN, Infinity, -Infinity])(
+        'rejects invalid configuration %s immediately',
+        (value) => {
+          expect(() => createPageQuerySchema({ [field]: value })).toThrow(
+            z.ZodError,
+          )
+        },
+      )
+    },
+  )
 
   it.each([101, '101'])(
-    'rejects requests above the fixed maximum %s',
+    'rejects requests above the default maximum %s',
     (pageSize) => {
       expect(pageQuerySchema.safeParse({ pageSize }).success).toBe(false)
       expect(createPageQuerySchema().safeParse({ pageSize }).success).toBe(
@@ -158,10 +161,52 @@ describe('createPageQuerySchema', () => {
     )
   })
 
+  it('supports larger custom defaults and an inclusive maximum', () => {
+    const schema = createPageQuerySchema({
+      defaultPageSize: 150,
+      maxPageSize: 200,
+    })
+    expect(schema.parse({})).toEqual({ page: 1, pageSize: 150 })
+    expect(schema.parse({ pageSize: '200' }).pageSize).toBe(200)
+    expect(schema.safeParse({ pageSize: 201 }).success).toBe(false)
+    expect(pageQuerySchema.safeParse({ pageSize: 150 }).success).toBe(false)
+  })
+
+  it('supports smaller maxima without changing other instances', () => {
+    const schema = createPageQuerySchema({ defaultPageSize: 5, maxPageSize: 5 })
+    expect(schema.parse({})).toEqual({ page: 1, pageSize: 5 })
+    expect(schema.parse({ pageSize: 1 }).pageSize).toBe(1)
+    expect(schema.parse({ pageSize: '5' }).pageSize).toBe(5)
+    expect(schema.safeParse({ pageSize: 6 }).success).toBe(false)
+    expect(pageQuerySchema.parse({ pageSize: 100 }).pageSize).toBe(100)
+    expect(
+      createPageQuerySchema({ maxPageSize: undefined }).parse({ pageSize: 100 })
+        .pageSize,
+    ).toBe(100)
+  })
+
+  it('rejects defaults above the configured maximum without clamping', () => {
+    for (const options of [
+      { maxPageSize: 5 },
+      { defaultPageSize: 20, maxPageSize: 10 },
+    ]) {
+      expect(() => createPageQuerySchema(options)).toThrow(z.ZodError)
+    }
+    try {
+      createPageQuerySchema({ defaultPageSize: 20, maxPageSize: 10 })
+    } catch (error) {
+      expect(error).toBeInstanceOf(z.ZodError)
+      if (error instanceof z.ZodError) {
+        expect(error.issues[0]?.path).toEqual(['defaultPageSize'])
+      }
+    }
+  })
+
   it('preserves input and output types and supports extension', () => {
     expectTypeOf<PageOptions>().toEqualTypeOf<{
       defaultPage?: number | undefined
       defaultPageSize?: number | undefined
+      maxPageSize?: number | undefined
     }>()
     const schema = createPageQuerySchema()
     expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<PageQueryInput>()
