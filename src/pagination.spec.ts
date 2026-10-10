@@ -10,7 +10,6 @@ import {
   createPaginationQuerySchema,
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
-  MAX_PAGE_SIZE,
   paginatedResponseSchema,
   paginationQuerySchema,
 } from './index'
@@ -38,17 +37,17 @@ describe('paginationQuerySchema', () => {
     })
   })
 
-  it('accepts inclusive boundaries', () => {
+  it('accepts minimum values and page sizes above 100', () => {
     expect(paginationQuerySchema.parse({ page: 1, pageSize: 1 })).toEqual({
       page: 1,
       pageSize: 1,
     })
-    expect(
-      paginationQuerySchema.parse({ page: 101, pageSize: MAX_PAGE_SIZE }),
-    ).toEqual({
-      page: 101,
-      pageSize: 100,
-    })
+    expect(paginationQuerySchema.parse({ page: 101, pageSize: '200' })).toEqual(
+      {
+        page: 101,
+        pageSize: 200,
+      },
+    )
   })
 
   it.each([0, -1, 1.5, 'invalid', '', null, Number.NaN, Infinity, -Infinity])(
@@ -58,21 +57,12 @@ describe('paginationQuerySchema', () => {
     },
   )
 
-  it.each([
-    0,
-    -1,
-    1.5,
-    101,
-    '101',
-    'invalid',
-    '',
-    null,
-    Number.NaN,
-    Infinity,
-    -Infinity,
-  ])('rejects invalid pageSize %s', (pageSize) => {
-    expect(paginationQuerySchema.safeParse({ pageSize }).success).toBe(false)
-  })
+  it.each([0, -1, 1.5, 'invalid', '', null, Number.NaN, Infinity, -Infinity])(
+    'rejects invalid pageSize %s',
+    (pageSize) => {
+      expect(paginationQuerySchema.safeParse({ pageSize }).success).toBe(false)
+    },
+  )
 
   it('infers optional input fields and required numeric output', () => {
     expectTypeOf<PaginationQueryInput>().toEqualTypeOf<{
@@ -101,7 +91,8 @@ describe('createPaginationQuerySchema', () => {
       }),
     ]) {
       expect(schema.parse({})).toEqual({ page: 1, pageSize: 10 })
-      expect(schema.safeParse({ pageSize: 101 }).success).toBe(false)
+      expect(schema.parse({ pageSize: 101 }).pageSize).toBe(101)
+      expect(schema.parse({ pageSize: '200' }).pageSize).toBe(200)
     }
   })
 
@@ -126,8 +117,8 @@ describe('createPaginationQuerySchema', () => {
       pageSize: 10,
     })
     expect(
-      createPaginationQuerySchema({ defaultPageSize: 50 }).parse({}),
-    ).toEqual({ page: 1, pageSize: 50 })
+      createPaginationQuerySchema({ defaultPageSize: 500 }).parse({}),
+    ).toEqual({ page: 1, pageSize: 500 })
     expect(
       createPaginationQuerySchema({ maxPageSize: 200 }).parse({ pageSize: 200 })
         .pageSize,
@@ -162,7 +153,6 @@ describe('createPaginationQuerySchema', () => {
 
   it('rejects a default page size greater than the maximum without clamping', () => {
     for (const options of [
-      { defaultPageSize: 101 },
       { maxPageSize: 5 },
       { defaultPageSize: 20, maxPageSize: 10 },
     ]) {
@@ -224,8 +214,7 @@ describe('paginatedResponseSchema', () => {
       total: 0,
     })
     expect(
-      responseSchema.safeParse({ ...response, pageSize: MAX_PAGE_SIZE + 1 })
-        .success,
+      responseSchema.safeParse({ ...response, pageSize: 101 }).success,
     ).toBe(true)
   })
 

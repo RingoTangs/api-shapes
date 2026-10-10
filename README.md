@@ -25,12 +25,12 @@ paginationQuerySchema.parse({})
 // { page: 1, pageSize: 10 }
 ```
 
-Both fields must resolve to integers. `page` starts at 1; `pageSize` ranges
-from 1 to 100. Missing fields receive defaults. Conversion follows Zod's
+Both fields must resolve to positive integers. The default request Schema has
+no page-size maximum. Missing fields receive defaults. Conversion follows Zod's
 `z.coerce.number()` behavior; invalid values produce a Zod validation error.
 Use `.safeParse()` when you prefer a result instead of an exception.
 
-The package exports `DEFAULT_PAGE`, `DEFAULT_PAGE_SIZE`, and `MAX_PAGE_SIZE`.
+The package exports `DEFAULT_PAGE` and `DEFAULT_PAGE_SIZE`.
 
 ### Custom pagination options
 
@@ -49,8 +49,9 @@ querySchema.parse({ page: '2', pageSize: '200' })
 // { page: 2, pageSize: 200 }
 ```
 
-All options are optional and fall back to 1, 10, and 100 respectively. They
-must be positive integers, with `defaultPageSize <= maxPageSize`; invalid
+All options are optional. `defaultPage` and `defaultPageSize` fall back to 1
+and 10; `maxPageSize` is unset by default. Provided values must be positive
+integers. When an upper limit is configured, `defaultPageSize <= maxPageSize`; invalid
 configuration throws a Zod error when the factory is called. Defaults are not
 clamped: setting `maxPageSize` below 10 also requires a compatible
 `defaultPageSize`. The minimum request page remains 1 regardless of its default.
