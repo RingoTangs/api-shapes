@@ -1,8 +1,10 @@
 # Repository Guidelines
 
+Lightweight, framework-agnostic API schemas and types powered by Zod, intended for distribution as an npm package.
+
 ## Project Structure & Module Organization
 
-This repository is a TypeScript library with Zod pagination schemas. Source lives in `src/`: `index.ts` is the package entry point, `pagination.ts` defines query and response schemas, and `index.spec.ts` contains the current tests. Export intended public APIs through `src/index.ts`. `types/` is reserved for ambient declarations. `dist/` contains generated CommonJS, ESM, and type declarations; do not edit generated output. Root configuration files control TypeScript, tsdown, Vitest, ESLint, and Prettier. GitHub Actions workflows live in `.github/workflows/`.
+Source lives in `src/`: `index.ts` is the package entry point, `pagination.ts` provides the current pagination schemas, and `index.spec.ts` contains tests. Export intended public APIs through `src/index.ts`. `types/` is reserved for ambient declarations. `dist/` contains generated CommonJS, ESM, and type declarations; do not edit generated output. Build and tooling configurations live at the root; CI and publishing workflows live in `.github/workflows/`.
 
 ## Build, Test, and Development Commands
 
@@ -21,12 +23,12 @@ Before submitting, run `pnpm check`, `pnpm build`, and `pnpm pack:check`, matchi
 
 ## Coding Style & Naming Conventions
 
-Use two-space indentation, LF endings, single quotes, no semicolons, and trailing commas as configured by Prettier. ESLint uses the Antfu TypeScript library configuration. Prefer camelCase for functions and schema values, PascalCase for types, and UPPER_SNAKE_CASE for constants, following `pagination.ts`. The `@/` alias resolves to `src/`. Infer schema types with `z.infer` where appropriate.
+Keep schemas reusable and framework-agnostic; avoid framework dependencies and unnecessary runtime dependencies. Derive TypeScript types with `z.infer` instead of duplicating schema definitions. Use two-space indentation, LF endings, single quotes, no semicolons, and trailing commas as configured by Prettier. ESLint uses the Antfu TypeScript library configuration. Use camelCase for functions and schemas, PascalCase for types, and UPPER_SNAKE_CASE for constants. The `@/` alias resolves to `src/`.
 
 ## Testing Guidelines
 
-Place Vitest tests beside source files as `*.spec.ts`. Use descriptive `describe` and `it` names and assertions that verify observable behavior. For pagination changes, cover defaults, coercion, invalid inputs, and page-size boundaries. No coverage threshold is configured. Run a focused test with `pnpm exec vitest run src/index.spec.ts`.
+Place Vitest tests beside source files as `*.spec.ts`. Use descriptive `describe` and `it` names. Cover valid and invalid inputs, defaults, coercion, and boundary behavior; pagination tests should include page-size limits. Check inferred types through TypeScript when changing schema contracts. No coverage threshold is configured. Run a focused test with `pnpm exec vitest run src/index.spec.ts`.
 
 ## Commit & Pull Request Guidelines
 
-Existing commits follow Conventional Commits, such as `feat: add pagination schema`. Use a concise, imperative subject with an appropriate prefix. Pull requests should explain the change, describe public API effects, link relevant issues, and report validation commands. Keep changes focused and update `pnpm-lock.yaml` when dependencies change.
+Existing commits follow Conventional Commits, such as `feat: add pagination schema`. Use a concise, imperative subject. Pull requests should explain changes, public API effects, potential breaking changes, relevant issues, and validation results. Keep changes focused and update `pnpm-lock.yaml` with dependency changes. When changing package exports or build configuration, verify public exports, generated declarations, and ESM/CommonJS compatibility before release.
