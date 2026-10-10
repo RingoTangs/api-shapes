@@ -4,9 +4,6 @@ import { z } from 'zod'
 export const errorSchema = z.object({
   code: z.string(),
   message: z.string(),
-  type: z.string(),
-  status: z.number().int().min(100).max(599),
-  errors: z.array(z.any()),
 })
 
 export type ErrorResponse = z.infer<typeof errorSchema>
