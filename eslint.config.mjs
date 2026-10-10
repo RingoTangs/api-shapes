@@ -9,4 +9,7 @@ export default antfu({
   gitignore: true,
   test: true,
   ignores: ['**/pnpm-lock.yaml'],
+  rules: {
+    'ts/explicit-function-return-type': 'off',
+  },
 }).append(prettier)
