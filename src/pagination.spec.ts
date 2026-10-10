@@ -87,7 +87,6 @@ describe('createPaginationQuerySchema', () => {
       createPaginationQuerySchema({
         defaultPage: undefined,
         defaultPageSize: undefined,
-        maxPageSize: undefined,
       }),
     ]) {
       expect(schema.parse({})).toEqual({ page: 1, pageSize: 10 })
@@ -96,11 +95,10 @@ describe('createPaginationQuerySchema', () => {
     }
   })
 
-  it('uses custom defaults and an inclusive maximum', () => {
+  it('uses custom defaults without limiting page size', () => {
     const schema = createPaginationQuerySchema({
       defaultPage: 3,
       defaultPageSize: 20,
-      maxPageSize: 200,
     })
     expect(schema.parse({})).toEqual({ page: 3, pageSize: 20 })
     expect(schema.parse({ page: '1', pageSize: '200' })).toEqual({
@@ -108,7 +106,7 @@ describe('createPaginationQuerySchema', () => {
       pageSize: 200,
     })
     expect(schema.parse({ pageSize: 1 }).pageSize).toBe(1)
-    expect(schema.safeParse({ pageSize: 201 }).success).toBe(false)
+    expect(schema.parse({ pageSize: 201 }).pageSize).toBe(201)
   })
 
   it('fills omitted options and keeps instances independent', () => {
@@ -120,61 +118,37 @@ describe('createPaginationQuerySchema', () => {
       createPaginationQuerySchema({ defaultPageSize: 500 }).parse({}),
     ).toEqual({ page: 1, pageSize: 500 })
     expect(
-      createPaginationQuerySchema({ maxPageSize: 200 }).parse({ pageSize: 200 })
-        .pageSize,
+      createPaginationQuerySchema().parse({ pageSize: 200 }).pageSize,
     ).toBe(200)
     const small = createPaginationQuerySchema({
       defaultPageSize: 5,
-      maxPageSize: 5,
     })
     const large = createPaginationQuerySchema({
       defaultPageSize: 200,
-      maxPageSize: 200,
     })
     expect(small.parse({})).toEqual({ page: 1, pageSize: 5 })
-    expect(small.safeParse({ pageSize: 6 }).success).toBe(false)
+    expect(small.parse({ pageSize: 200 }).pageSize).toBe(200)
     expect(large.parse({})).toEqual({ page: 1, pageSize: 200 })
     expect(paginationQuerySchema.parse({})).toEqual({ page: 1, pageSize: 10 })
   })
 
-  describe.each(['defaultPage', 'defaultPageSize', 'maxPageSize'] as const)(
-    '%s',
-    (field) => {
-      it.each([0, -1, 1.5, Number.NaN, Infinity, -Infinity])(
-        'rejects invalid configuration %s immediately',
-        (value) => {
-          expect(() => createPaginationQuerySchema({ [field]: value })).toThrow(
-            z.ZodError,
-          )
-        },
-      )
-    },
-  )
-
-  it('rejects a default page size greater than the maximum without clamping', () => {
-    for (const options of [
-      { maxPageSize: 5 },
-      { defaultPageSize: 20, maxPageSize: 10 },
-    ]) {
-      expect(() => createPaginationQuerySchema(options)).toThrow(z.ZodError)
-    }
-    try {
-      createPaginationQuerySchema({ maxPageSize: 5 })
-    } catch (error) {
-      expect(error).toBeInstanceOf(z.ZodError)
-      if (error instanceof z.ZodError) {
-        expect(error.issues[0]?.path).toEqual(['defaultPageSize'])
-      }
-    }
+  describe.each(['defaultPage', 'defaultPageSize'] as const)('%s', (field) => {
+    it.each([0, -1, 1.5, Number.NaN, Infinity, -Infinity])(
+      'rejects invalid configuration %s immediately',
+      (value) => {
+        expect(() => createPaginationQuerySchema({ [field]: value })).toThrow(
+          z.ZodError,
+        )
+      },
+    )
   })
 
   it('preserves input and output types and supports extension', () => {
     expectTypeOf<PaginationOptions>().toEqualTypeOf<{
       defaultPage?: number | undefined
       defaultPageSize?: number | undefined
-      maxPageSize?: number | undefined
     }>()
-    const schema = createPaginationQuerySchema({ maxPageSize: 200 })
+    const schema = createPaginationQuerySchema()
     expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<PaginationQueryInput>()
     expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<PaginationQuery>()
     expect(

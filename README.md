@@ -40,7 +40,6 @@ import { createPaginationQuerySchema } from 'api-shapes'
 const querySchema = createPaginationQuerySchema({
   defaultPage: 1,
   defaultPageSize: 20,
-  maxPageSize: 200,
 })
 
 querySchema.parse({})
@@ -49,12 +48,10 @@ querySchema.parse({ page: '2', pageSize: '200' })
 // { page: 2, pageSize: 200 }
 ```
 
-All options are optional. `defaultPage` and `defaultPageSize` fall back to 1
-and 10; `maxPageSize` is unset by default. Provided values must be positive
-integers. When an upper limit is configured, `defaultPageSize <= maxPageSize`; invalid
-configuration throws a Zod error when the factory is called. Defaults are not
-clamped: setting `maxPageSize` below 10 also requires a compatible
-`defaultPageSize`. The minimum request page remains 1 regardless of its default.
+Both options are optional. `defaultPage` and `defaultPageSize` fall back to 1
+and 10 and must be positive integers. Invalid configuration throws a Zod error
+when the factory is called. The minimum request page remains 1 regardless of
+its default; request page sizes have no business upper limit.
 Each factory call creates an independent Schema that can be extended with
 `.extend()`. The package exports the `PaginationOptions` type.
 

@@ -3,22 +3,11 @@ import { z } from 'zod'
 export const DEFAULT_PAGE = 1
 export const DEFAULT_PAGE_SIZE = 10
 
-// 配置必须为正整数；设置上限时，默认页大小不能超过上限。
-const paginationOptionsSchema = z
-  .object({
-    defaultPage: z.number().int().min(1).default(DEFAULT_PAGE),
-    defaultPageSize: z.number().int().min(1).default(DEFAULT_PAGE_SIZE),
-    maxPageSize: z.number().int().min(1).optional(),
-  })
-  .refine(
-    (options) =>
-      options.maxPageSize === undefined ||
-      options.defaultPageSize <= options.maxPageSize,
-    {
-      message: 'defaultPageSize must not exceed maxPageSize',
-      path: ['defaultPageSize'],
-    },
-  )
+// 配置中的默认值必须为正整数。
+const paginationOptionsSchema = z.object({
+  defaultPage: z.number().int().min(1).default(DEFAULT_PAGE),
+  defaultPageSize: z.number().int().min(1).default(DEFAULT_PAGE_SIZE),
+})
 
 export type PaginationOptions = z.input<typeof paginationOptionsSchema>
 
@@ -26,17 +15,12 @@ export type PaginationOptions = z.input<typeof paginationOptionsSchema>
 export const createPaginationQuerySchema = (
   options: PaginationOptions = {},
 ) => {
-  const { defaultPage, defaultPageSize, maxPageSize } =
+  const { defaultPage, defaultPageSize } =
     paginationOptionsSchema.parse(options)
-
-  let pageSizeSchema = z.coerce.number().int().min(1)
-  if (maxPageSize !== undefined) {
-    pageSizeSchema = pageSizeSchema.max(maxPageSize)
-  }
 
   return z.object({
     page: z.coerce.number().int().min(1).default(defaultPage),
-    pageSize: pageSizeSchema.default(defaultPageSize),
+    pageSize: z.coerce.number().int().min(1).default(defaultPageSize),
   })
 }
 
