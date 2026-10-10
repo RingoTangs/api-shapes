@@ -7,60 +7,58 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { z } from 'zod'
 import {
-  createPaginationQuerySchema,
+  createPageQuerySchema,
+  createPageSchema,
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
-  paginatedResponseSchema,
-  paginationQuerySchema,
+  pageQuerySchema,
 } from './index'
 
-describe('paginationQuerySchema', () => {
+describe('pageQuerySchema', () => {
   it('uses exported defaults for missing fields', () => {
-    expect(paginationQuerySchema.parse({})).toEqual({
+    expect(pageQuerySchema.parse({})).toEqual({
       page: DEFAULT_PAGE,
       pageSize: DEFAULT_PAGE_SIZE,
     })
-    expect(paginationQuerySchema.parse({ page: 2 })).toEqual({
+    expect(pageQuerySchema.parse({ page: 2 })).toEqual({
       page: 2,
       pageSize: 10,
     })
-    expect(paginationQuerySchema.parse({ pageSize: 20 })).toEqual({
+    expect(pageQuerySchema.parse({ pageSize: 20 })).toEqual({
       page: 1,
       pageSize: 20,
     })
   })
 
   it('converts numeric strings', () => {
-    expect(paginationQuerySchema.parse({ page: '2', pageSize: '20' })).toEqual({
+    expect(pageQuerySchema.parse({ page: '2', pageSize: '20' })).toEqual({
       page: 2,
       pageSize: 20,
     })
   })
 
   it('accepts minimum values and page sizes above 100', () => {
-    expect(paginationQuerySchema.parse({ page: 1, pageSize: 1 })).toEqual({
+    expect(pageQuerySchema.parse({ page: 1, pageSize: 1 })).toEqual({
       page: 1,
       pageSize: 1,
     })
-    expect(paginationQuerySchema.parse({ page: 101, pageSize: '200' })).toEqual(
-      {
-        page: 101,
-        pageSize: 200,
-      },
-    )
+    expect(pageQuerySchema.parse({ page: 101, pageSize: '200' })).toEqual({
+      page: 101,
+      pageSize: 200,
+    })
   })
 
   it.each([0, -1, 1.5, 'invalid', '', null, Number.NaN, Infinity, -Infinity])(
     'rejects invalid page %s',
     (page) => {
-      expect(paginationQuerySchema.safeParse({ page }).success).toBe(false)
+      expect(pageQuerySchema.safeParse({ page }).success).toBe(false)
     },
   )
 
   it.each([0, -1, 1.5, 'invalid', '', null, Number.NaN, Infinity, -Infinity])(
     'rejects invalid pageSize %s',
     (pageSize) => {
-      expect(paginationQuerySchema.safeParse({ pageSize }).success).toBe(false)
+      expect(pageQuerySchema.safeParse({ pageSize }).success).toBe(false)
     },
   )
 
@@ -73,18 +71,16 @@ describe('paginationQuerySchema', () => {
       page: number
       pageSize: number
     }>()
-    expectTypeOf(
-      paginationQuerySchema.parse({}),
-    ).toEqualTypeOf<PaginationQuery>()
+    expectTypeOf(pageQuerySchema.parse({})).toEqualTypeOf<PaginationQuery>()
   })
 })
 
-describe('createPaginationQuerySchema', () => {
+describe('createPageQuerySchema', () => {
   it('preserves defaults with omitted or empty options', () => {
     for (const schema of [
-      createPaginationQuerySchema(),
-      createPaginationQuerySchema({}),
-      createPaginationQuerySchema({
+      createPageQuerySchema(),
+      createPageQuerySchema({}),
+      createPageQuerySchema({
         defaultPage: undefined,
         defaultPageSize: undefined,
       }),
@@ -96,7 +92,7 @@ describe('createPaginationQuerySchema', () => {
   })
 
   it('uses custom defaults without limiting page size', () => {
-    const schema = createPaginationQuerySchema({
+    const schema = createPageQuerySchema({
       defaultPage: 3,
       defaultPageSize: 20,
     })
@@ -110,33 +106,32 @@ describe('createPaginationQuerySchema', () => {
   })
 
   it('fills omitted options and keeps instances independent', () => {
-    expect(createPaginationQuerySchema({ defaultPage: 2 }).parse({})).toEqual({
+    expect(createPageQuerySchema({ defaultPage: 2 }).parse({})).toEqual({
       page: 2,
       pageSize: 10,
     })
-    expect(
-      createPaginationQuerySchema({ defaultPageSize: 500 }).parse({}),
-    ).toEqual({ page: 1, pageSize: 500 })
-    expect(
-      createPaginationQuerySchema().parse({ pageSize: 200 }).pageSize,
-    ).toBe(200)
-    const small = createPaginationQuerySchema({
+    expect(createPageQuerySchema({ defaultPageSize: 500 }).parse({})).toEqual({
+      page: 1,
+      pageSize: 500,
+    })
+    expect(createPageQuerySchema().parse({ pageSize: 200 }).pageSize).toBe(200)
+    const small = createPageQuerySchema({
       defaultPageSize: 5,
     })
-    const large = createPaginationQuerySchema({
+    const large = createPageQuerySchema({
       defaultPageSize: 200,
     })
     expect(small.parse({})).toEqual({ page: 1, pageSize: 5 })
     expect(small.parse({ pageSize: 200 }).pageSize).toBe(200)
     expect(large.parse({})).toEqual({ page: 1, pageSize: 200 })
-    expect(paginationQuerySchema.parse({})).toEqual({ page: 1, pageSize: 10 })
+    expect(pageQuerySchema.parse({})).toEqual({ page: 1, pageSize: 10 })
   })
 
   describe.each(['defaultPage', 'defaultPageSize'] as const)('%s', (field) => {
     it.each([0, -1, 1.5, Number.NaN, Infinity, -Infinity])(
       'rejects invalid configuration %s immediately',
       (value) => {
-        expect(() => createPaginationQuerySchema({ [field]: value })).toThrow(
+        expect(() => createPageQuerySchema({ [field]: value })).toThrow(
           z.ZodError,
         )
       },
@@ -148,7 +143,7 @@ describe('createPaginationQuerySchema', () => {
       defaultPage?: number | undefined
       defaultPageSize?: number | undefined
     }>()
-    const schema = createPaginationQuerySchema()
+    const schema = createPageQuerySchema()
     expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<PaginationQueryInput>()
     expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<PaginationQuery>()
     expect(
@@ -157,9 +152,9 @@ describe('createPaginationQuerySchema', () => {
   })
 })
 
-describe('paginatedResponseSchema', () => {
+describe('createPageSchema', () => {
   const itemSchema = z.object({ id: z.string(), name: z.string() })
-  const responseSchema = paginatedResponseSchema(itemSchema)
+  const responseSchema = createPageSchema(itemSchema)
   const response = {
     items: [{ id: '1', name: 'Ada' }],
     page: 1,
@@ -232,7 +227,7 @@ describe('paginatedResponseSchema', () => {
       total: number
     }>()
 
-    const transformedSchema = paginatedResponseSchema(
+    const transformedSchema = createPageSchema(
       z.string().transform((value) => value.length),
     )
     expectTypeOf<z.output<typeof transformedSchema>>().toEqualTypeOf<{

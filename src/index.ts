@@ -6,11 +6,11 @@ export {
 } from './error'
 export type { ErrorDetail, ErrorResponse } from './error'
 export {
-  createPaginationQuerySchema,
+  createPageQuerySchema,
+  createPageSchema,
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
-  paginatedResponseSchema,
-  paginationQuerySchema,
+  pageQuerySchema,
 } from './pagination'
 export type {
   PaginationOptions,

@@ -15,13 +15,13 @@ version range is `^4.6.5`.
 
 ```ts
 import type { PaginationQuery, PaginationQueryInput } from 'api-shapes'
-import { paginationQuerySchema } from 'api-shapes'
+import { pageQuerySchema } from 'api-shapes'
 
 const input: PaginationQueryInput = { page: '2', pageSize: '20' }
-const query: PaginationQuery = paginationQuerySchema.parse(input)
+const query: PaginationQuery = pageQuerySchema.parse(input)
 // { page: 2, pageSize: 20 }
 
-paginationQuerySchema.parse({})
+pageQuerySchema.parse({})
 // { page: 1, pageSize: 10 }
 ```
 
@@ -35,9 +35,9 @@ The package exports `DEFAULT_PAGE` and `DEFAULT_PAGE_SIZE`.
 ### Custom pagination options
 
 ```ts
-import { createPaginationQuerySchema } from 'api-shapes'
+import { createPageQuerySchema } from 'api-shapes'
 
-const querySchema = createPaginationQuerySchema({
+const querySchema = createPageQuerySchema({
   defaultPage: 1,
   defaultPageSize: 20,
 })
@@ -58,14 +58,14 @@ Each factory call creates an independent Schema that can be extended with
 ## Pagination responses
 
 ```ts
-import { paginatedResponseSchema } from 'api-shapes'
+import { createPageSchema } from 'api-shapes'
 import { z } from 'zod'
 
 const userSchema = z.object({
   id: z.string(),
   name: z.string(),
 })
-const usersPageSchema = paginatedResponseSchema(userSchema)
+const usersPageSchema = createPageSchema(userSchema)
 type UsersPage = z.infer<typeof usersPageSchema>
 
 const response: UsersPage = usersPageSchema.parse({
