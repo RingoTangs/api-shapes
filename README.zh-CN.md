@@ -15,16 +15,16 @@
 ## 安装
 
 ```sh
-npm install @ringotangs/api-shapes zod@^4.6.5
+npm install @ringotangs/api-shapes zod@^4.0.0
 ```
 
 或使用 pnpm：
 
 ```sh
-pnpm add @ringotangs/api-shapes zod@^4.6.5
+pnpm add @ringotangs/api-shapes zod@^4.0.0
 ```
 
-Zod 4 是必需的 peer dependency，当前支持的版本范围为 `^4.6.5`。
+Zod 4 是必需的 peer dependency，当前支持的版本范围为 `^4.0.0`。
 本库提供 ESM、CommonJS 和 TypeScript 类型声明。
 
 ## 快速开始

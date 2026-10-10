@@ -16,16 +16,16 @@ and extend the provided schemas where useful.
 ## Installation
 
 ```sh
-npm install @ringotangs/api-shapes zod@^4.6.5
+npm install @ringotangs/api-shapes zod@^4.0.0
 ```
 
 Or with pnpm:
 
 ```sh
-pnpm add @ringotangs/api-shapes zod@^4.6.5
+pnpm add @ringotangs/api-shapes zod@^4.0.0
 ```
 
-Zod 4 is a required peer dependency. The current supported range is `^4.6.5`.
+Zod 4 is a required peer dependency. The current supported range is `^4.0.0`.
 The package provides ESM, CommonJS, and TypeScript declarations.
 
 ## Quick Start
