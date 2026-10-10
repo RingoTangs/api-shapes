@@ -83,7 +83,7 @@ not enforce relationships between the pagination fields and item count.
 
 ## Error responses
 
-Error responses use five required fields. Normal responses are defined by your API.
+Error responses require `code` and `message`. Normal responses are defined by your API.
 
 ```ts
 import type { ErrorResponse } from 'api-shapes'
@@ -92,17 +92,12 @@ import { errorSchema } from 'api-shapes'
 const error: ErrorResponse = errorSchema.parse({
   code: 'NOT_FOUND',
   message: 'Resource not found',
-  type: 'not-found',
-  status: 404,
-  errors: [],
 })
 ```
 
-`code`, `message`, and `type` are strings and may be empty. `type` has no URI
-format restriction. `status` is an integer from 100 to 599. `errors` is an
-array of arbitrary elements, inferred as `any[]`, and may be empty. Fields
-are not coerced and have no defaults. Undeclared fields are removed during
-parsing. Use `.safeParse()` to handle invalid data without throwing.
+`code` and `message` are required strings and may be empty. They are not
+coerced and have no defaults. Undeclared fields are removed during parsing.
+Use `.safeParse()` to handle invalid data without throwing.
 
 ### Business extensions
 
@@ -126,8 +121,6 @@ type ValidationError = z.infer<typeof validationErrorSchema>
 const error: ValidationError = validationErrorSchema.parse({
   code: 'VALIDATION_ERROR',
   message: 'Invalid input',
-  type: 'validation',
-  status: 422,
   errors: [{ field: 'email', reason: 'Invalid email format' }],
   traceId: 'trace-1',
 })
