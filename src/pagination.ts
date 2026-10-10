@@ -2,11 +2,17 @@ import { z } from 'zod'
 
 export const DEFAULT_PAGE = 1
 export const DEFAULT_PAGE_SIZE = 10
+export const MAX_PAGE_SIZE = 100
 
-// 配置中的默认值必须为正整数。
+// 默认值必须为正整数，默认页大小不得超过请求上限。
 const pageOptionsSchema = z.object({
   defaultPage: z.number().int().min(1).default(DEFAULT_PAGE),
-  defaultPageSize: z.number().int().min(1).default(DEFAULT_PAGE_SIZE),
+  defaultPageSize: z
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_PAGE_SIZE)
+    .default(DEFAULT_PAGE_SIZE),
 })
 
 export type PageOptions = z.input<typeof pageOptionsSchema>
@@ -17,7 +23,12 @@ export const createPageQuerySchema = (options: PageOptions = {}) => {
 
   return z.object({
     page: z.coerce.number().int().min(1).default(defaultPage),
-    pageSize: z.coerce.number().int().min(1).default(defaultPageSize),
+    pageSize: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_PAGE_SIZE)
+      .default(defaultPageSize),
   })
 }
 

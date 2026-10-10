@@ -64,8 +64,7 @@ prefer a result with a `success` flag.
 
 `pageQuerySchema` defaults to `page: 1` and `pageSize: 10` for missing or
 `undefined` fields. Both values must resolve to positive integers. Conversion
-follows `z.coerce.number()`, including numeric strings. There is no business
-upper limit on page size.
+follows `z.coerce.number()`, including numeric strings. Request page size is limited to 100 (`MAX_PAGE_SIZE`).
 
 ```ts
 import type { PageQuery, PageQueryInput } from '@ringotangs/api-shapes'
@@ -95,7 +94,8 @@ const query = querySchema.parse({})
 // { page: 1, pageSize: 20 }
 ```
 
-Both options are optional and must be positive integers. Invalid configuration
+Both options are optional and must be positive integers. `defaultPageSize`
+must not exceed 100; custom defaults do not change the request limit. Invalid configuration
 throws when the factory is called. Changing `defaultPage` does not change the
 minimum page of 1. Each call creates an independent schema that supports
 `.extend()` for additional query fields.
@@ -170,6 +170,7 @@ All exports are available from `@ringotangs/api-shapes`.
 | --------------------------------- | -------- | -------------------------------------------------------------- |
 | `DEFAULT_PAGE`                    | Constant | Default query page: `1`.                                       |
 | `DEFAULT_PAGE_SIZE`               | Constant | Default query page size: `10`.                                 |
+| `MAX_PAGE_SIZE`                   | Constant | Fixed request page-size maximum: `100`.                        |
 | `pageQuerySchema`                 | Schema   | Pagination query with default settings and number coercion.    |
 | `createPageQuerySchema(options?)` | Factory  | Query schema with custom default page and page size.           |
 | `createPageSchema(itemSchema)`    | Factory  | Response schema with `items`, `page`, `pageSize`, and `total`. |
