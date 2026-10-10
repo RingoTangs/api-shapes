@@ -83,8 +83,7 @@ not enforce relationships between the pagination fields and item count.
 
 ## Error responses
 
-Only error responses use the shared `{ code, message }` structure. Define normal
-responses to fit your API; no common response wrapper is required.
+Error responses use five required fields. Normal responses are defined by your API.
 
 ```ts
 import type { ErrorResponse } from 'api-shapes'
@@ -93,55 +92,47 @@ import { errorSchema } from 'api-shapes'
 const error: ErrorResponse = errorSchema.parse({
   code: 'NOT_FOUND',
   message: 'Resource not found',
+  type: 'not-found',
+  status: 404,
+  errors: [],
 })
 ```
 
-Both fields are required strings and may be empty. Neither field is trimmed
-or coerced. Use `.safeParse()` to
-handle invalid data without throwing.
+`code`, `message`, and `type` are strings and may be empty. `type` has no URI
+format restriction. `status` is an integer from 100 to 599. `errors` is an
+array of arbitrary elements, inferred as `any[]`, and may be empty. Fields
+are not coerced and have no defaults. Undeclared fields are removed during
+parsing. Use `.safeParse()` to handle invalid data without throwing.
 
 ### Business extensions
 
-The base Schema preserves undeclared fields without validating their values:
-
-```ts
-import { errorSchema } from 'api-shapes'
-
-errorSchema.parse({
-  code: 'NOT_FOUND',
-  message: 'Resource not found',
-  traceId: 'trace-1',
-})
-// traceId is preserved; its inferred type is unknown.
-```
-
-Use `.extend()` to validate business fields and infer their specific types:
+Use `.extend()` to validate custom errors and declare additional fields:
 
 ```ts
 import { errorSchema } from 'api-shapes'
 import { z } from 'zod'
 
 const validationErrorSchema = errorSchema.extend({
-  details: z
-    .array(
-      z.object({
-        field: z.string(),
-        reason: z.string(),
-      }),
-    )
-    .optional(),
+  errors: z.array(
+    z.object({
+      field: z.string(),
+      reason: z.string(),
+    }),
+  ),
+  traceId: z.string().optional(),
 })
 type ValidationError = z.infer<typeof validationErrorSchema>
 
 const error: ValidationError = validationErrorSchema.parse({
   code: 'VALIDATION_ERROR',
   message: 'Invalid input',
-  details: [{ field: 'email', reason: 'Invalid email format' }],
+  type: 'validation',
+  status: 422,
+  errors: [{ field: 'email', reason: 'Invalid email format' }],
+  traceId: 'trace-1',
 })
 ```
 
-This example makes `details` optional and allows an empty array. Its shape is
-chosen by the application; api-shapes does not prescribe a detail format.
-This extension approach is inspired by
-[RFC 9457 extension members](https://www.rfc-editor.org/rfc/rfc9457.html#section-3.2).
-The `{ code, message }` format is not an RFC 9457 Problem Details format.
+The application chooses the error element format. This extension approach is
+inspired by [RFC 9457 extension members](https://www.rfc-editor.org/rfc/rfc9457.html#section-3.2);
+the response format is not an RFC 9457 Problem Details format.

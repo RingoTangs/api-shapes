@@ -1,5 +1,5 @@
 {
-  "name": "api-shapes",
+  "name": "@ringotangs/api-shapes",
   "type": "module",
   "version": "0.1.0",
   "packageManager": "pnpm@10.24.0",
