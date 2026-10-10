@@ -15,11 +15,14 @@
     "url": "https://github.com/RingoTangs/api-shapes/issues"
   },
   "keywords": [
+    "api",
+    "schema",
+    "types",
     "typescript",
-    "tsdown",
-    "npm-package",
-    "library",
-    "template"
+    "zod",
+    "validation",
+    "pagination",
+    "framework-agnostic"
   ],
   "sideEffects": false,
   "exports": {
