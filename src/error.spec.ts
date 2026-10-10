@@ -16,10 +16,10 @@ describe('errorResponseSchema', () => {
     })
   })
 
-  it('rejects an empty code', () => {
+  it('accepts an empty code', () => {
     expect(
       errorResponseSchema.safeParse({ code: '', message: 'Error' }).success,
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it.each([{}, { code: 'ERROR' }, { message: 'Error' }])(

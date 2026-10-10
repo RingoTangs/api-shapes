@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const errorResponseSchema = z.object({
-  code: z.string().min(1),
+  code: z.string(),
   message: z.string(),
 })
 

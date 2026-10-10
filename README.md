@@ -73,6 +73,6 @@ const error: ErrorResponse = errorResponseSchema.parse({
 })
 ```
 
-Both fields are required strings. `code` must contain at least one character;
-it is not trimmed or coerced. `message` may be empty. Use `.safeParse()` to
+Both fields are required strings and may be empty. Neither field is trimmed
+or coerced. Use `.safeParse()` to
 handle invalid data without throwing.
