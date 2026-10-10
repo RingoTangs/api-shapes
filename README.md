@@ -76,3 +76,46 @@ const error: ErrorResponse = errorResponseSchema.parse({
 Both fields are required strings and may be empty. Neither field is trimmed
 or coerced. Use `.safeParse()` to
 handle invalid data without throwing.
+
+### Default error details
+
+```ts
+import { errorWithDetailsSchema } from 'api-shapes'
+import { z } from 'zod'
+
+type ErrorWithDetails = z.infer<typeof errorWithDetailsSchema>
+
+const error: ErrorWithDetails = errorWithDetailsSchema.parse({
+  code: 'VALIDATION_ERROR',
+  message: 'Invalid input',
+  details: [{ key: 'email', value: 'Invalid email format' }],
+})
+```
+
+`details` is optional and may be an empty array. Each default detail has required
+string fields `key` and `value`, which may be empty. The package also exports
+`errorDetailSchema` and its inferred `ErrorDetail` type.
+
+### Custom error details
+
+```ts
+import { errorResponseWithDetailsSchema } from 'api-shapes'
+import { z } from 'zod'
+
+const customSchema = errorResponseWithDetailsSchema(
+  z.object({
+    field: z.string(),
+    reason: z.string(),
+  }),
+)
+type CustomError = z.infer<typeof customSchema>
+
+const error: CustomError = customSchema.parse({
+  code: 'VALIDATION_ERROR',
+  message: 'Invalid input',
+  details: [{ field: 'email', reason: 'Invalid email format' }],
+})
+```
+
+The factory extends `errorResponseSchema` with an optional array of your detail
+schema, preserving its validation and inferred types.

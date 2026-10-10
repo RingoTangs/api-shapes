@@ -1,5 +1,10 @@
-export { errorResponseSchema } from './error'
-export type { ErrorResponse } from './error'
+export {
+  errorDetailSchema,
+  errorResponseSchema,
+  errorResponseWithDetailsSchema,
+  errorWithDetailsSchema,
+} from './error'
+export type { ErrorDetail, ErrorResponse } from './error'
 export {
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
