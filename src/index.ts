@@ -12,8 +12,4 @@ export {
   DEFAULT_PAGE_SIZE,
   pageQuerySchema,
 } from './pagination'
-export type {
-  PaginationOptions,
-  PaginationQuery,
-  PaginationQueryInput,
-} from './pagination'
+export type { PageOptions, PageQuery, PageQueryInput } from './pagination'

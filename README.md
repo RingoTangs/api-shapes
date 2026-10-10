@@ -14,11 +14,11 @@ version range is `^4.6.5`.
 ## Pagination requests
 
 ```ts
-import type { PaginationQuery, PaginationQueryInput } from 'api-shapes'
+import type { PageQuery, PageQueryInput } from 'api-shapes'
 import { pageQuerySchema } from 'api-shapes'
 
-const input: PaginationQueryInput = { page: '2', pageSize: '20' }
-const query: PaginationQuery = pageQuerySchema.parse(input)
+const input: PageQueryInput = { page: '2', pageSize: '20' }
+const query: PageQuery = pageQuerySchema.parse(input)
 // { page: 2, pageSize: 20 }
 
 pageQuerySchema.parse({})
@@ -53,7 +53,7 @@ and 10 and must be positive integers. Invalid configuration throws a Zod error
 when the factory is called. The minimum request page remains 1 regardless of
 its default; request page sizes have no business upper limit.
 Each factory call creates an independent Schema that can be extended with
-`.extend()`. The package exports the `PaginationOptions` type.
+`.extend()`. The package exports the `PageOptions` type.
 
 ## Pagination responses
 

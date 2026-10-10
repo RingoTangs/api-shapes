@@ -1,8 +1,4 @@
-import type {
-  PaginationOptions,
-  PaginationQuery,
-  PaginationQueryInput,
-} from './index'
+import type { PageOptions, PageQuery, PageQueryInput } from './index'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { z } from 'zod'
@@ -63,15 +59,15 @@ describe('pageQuerySchema', () => {
   )
 
   it('infers optional input fields and required numeric output', () => {
-    expectTypeOf<PaginationQueryInput>().toEqualTypeOf<{
+    expectTypeOf<PageQueryInput>().toEqualTypeOf<{
       page?: unknown
       pageSize?: unknown
     }>()
-    expectTypeOf<PaginationQuery>().toEqualTypeOf<{
+    expectTypeOf<PageQuery>().toEqualTypeOf<{
       page: number
       pageSize: number
     }>()
-    expectTypeOf(pageQuerySchema.parse({})).toEqualTypeOf<PaginationQuery>()
+    expectTypeOf(pageQuerySchema.parse({})).toEqualTypeOf<PageQuery>()
   })
 })
 
@@ -139,13 +135,13 @@ describe('createPageQuerySchema', () => {
   })
 
   it('preserves input and output types and supports extension', () => {
-    expectTypeOf<PaginationOptions>().toEqualTypeOf<{
+    expectTypeOf<PageOptions>().toEqualTypeOf<{
       defaultPage?: number | undefined
       defaultPageSize?: number | undefined
     }>()
     const schema = createPageQuerySchema()
-    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<PaginationQueryInput>()
-    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<PaginationQuery>()
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<PageQueryInput>()
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<PageQuery>()
     expect(
       schema.extend({ search: z.string() }).parse({ search: 'Ada' }),
     ).toEqual({ page: 1, pageSize: 10, search: 'Ada' })
