@@ -65,9 +65,9 @@ responses to fit your API; no common response wrapper is required.
 
 ```ts
 import type { ErrorResponse } from 'api-shapes'
-import { errorResponseSchema } from 'api-shapes'
+import { errorSchema } from 'api-shapes'
 
-const error: ErrorResponse = errorResponseSchema.parse({
+const error: ErrorResponse = errorSchema.parse({
   code: 'NOT_FOUND',
   message: 'Resource not found',
 })
@@ -99,10 +99,10 @@ string fields `key` and `value`, which may be empty. The package also exports
 ### Custom error details
 
 ```ts
-import { errorResponseWithDetailsSchema } from 'api-shapes'
+import { createErrorSchema } from 'api-shapes'
 import { z } from 'zod'
 
-const customSchema = errorResponseWithDetailsSchema(
+const customSchema = createErrorSchema(
   z.object({
     field: z.string(),
     reason: z.string(),
@@ -117,5 +117,5 @@ const error: CustomError = customSchema.parse({
 })
 ```
 
-The factory extends `errorResponseSchema` with an optional array of your detail
+The factory extends `errorSchema` with an optional array of your detail
 schema, preserving its validation and inferred types.

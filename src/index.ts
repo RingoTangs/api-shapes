@@ -1,7 +1,7 @@
 export {
+  createErrorSchema,
   errorDetailSchema,
-  errorResponseSchema,
-  errorResponseWithDetailsSchema,
+  errorSchema,
   errorWithDetailsSchema,
 } from './error'
 export type { ErrorDetail, ErrorResponse } from './error'

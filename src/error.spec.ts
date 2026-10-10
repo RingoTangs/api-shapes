@@ -4,35 +4,35 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 
 import {
+  createErrorSchema,
   errorDetailSchema,
-  errorResponseSchema,
-  errorResponseWithDetailsSchema,
+  errorSchema,
   errorWithDetailsSchema,
 } from './index'
 
-describe('errorResponseSchema', () => {
+describe('errorSchema', () => {
   it('accepts an error response', () => {
     const response = { code: 'NOT_FOUND', message: 'Resource not found' }
-    expect(errorResponseSchema.parse(response)).toEqual(response)
+    expect(errorSchema.parse(response)).toEqual(response)
   })
 
   it('accepts a single-character code and an empty message', () => {
-    expect(errorResponseSchema.parse({ code: 'E', message: '' })).toEqual({
+    expect(errorSchema.parse({ code: 'E', message: '' })).toEqual({
       code: 'E',
       message: '',
     })
   })
 
   it('accepts an empty code', () => {
-    expect(
-      errorResponseSchema.safeParse({ code: '', message: 'Error' }).success,
-    ).toBe(true)
+    expect(errorSchema.safeParse({ code: '', message: 'Error' }).success).toBe(
+      true,
+    )
   })
 
   it.each([{}, { code: 'ERROR' }, { message: 'Error' }])(
     'rejects missing fields %j',
     (response) => {
-      expect(errorResponseSchema.safeParse(response).success).toBe(false)
+      expect(errorSchema.safeParse(response).success).toBe(false)
     },
   )
 
@@ -41,7 +41,7 @@ describe('errorResponseSchema', () => {
       'rejects non-string value %j',
       (value) => {
         expect(
-          errorResponseSchema.safeParse({
+          errorSchema.safeParse({
             code: 'ERROR',
             message: 'Error',
             [field]: value,
@@ -57,7 +57,7 @@ describe('errorResponseSchema', () => {
       message: string
     }>()
     expectTypeOf(
-      errorResponseSchema.parse({ code: 'ERROR', message: 'Error' }),
+      errorSchema.parse({ code: 'ERROR', message: 'Error' }),
     ).toEqualTypeOf<ErrorResponse>()
   })
 })
@@ -137,9 +137,9 @@ describe('errorWithDetailsSchema', () => {
   })
 })
 
-describe('errorResponseWithDetailsSchema', () => {
+describe('createErrorSchema', () => {
   it('validates and infers custom details', () => {
-    const schema = errorResponseWithDetailsSchema(
+    const schema = createErrorSchema(
       z.object({ field: z.string(), reason: z.string() }),
     )
     const response = {
@@ -165,7 +165,7 @@ describe('errorResponseWithDetailsSchema', () => {
   })
 
   it('preserves transformed detail input and output types', () => {
-    const schema = errorResponseWithDetailsSchema(
+    const schema = createErrorSchema(
       z.string().transform((value) => value.length),
     )
     expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<{
