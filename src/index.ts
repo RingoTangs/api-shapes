@@ -1,3 +1,5 @@
+export { errorResponseSchema } from './error'
+export type { ErrorResponse } from './error'
 export {
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,

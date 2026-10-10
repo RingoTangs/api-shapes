@@ -57,3 +57,22 @@ All four response fields are required. `page` is a positive integer,
 `pageSize` is an integer from 1 to 100, and `total` is a nonnegative integer.
 Response numbers are not coerced. Empty `items` are allowed; the schema does
 not enforce relationships between the pagination fields and item count.
+
+## Error responses
+
+Only error responses use the shared `{ code, message }` structure. Define normal
+responses to fit your API; no common response wrapper is required.
+
+```ts
+import type { ErrorResponse } from 'api-shapes'
+import { errorResponseSchema } from 'api-shapes'
+
+const error: ErrorResponse = errorResponseSchema.parse({
+  code: 'NOT_FOUND',
+  message: 'Resource not found',
+})
+```
+
+Both fields are required strings. `code` must contain at least one character;
+it is not trimmed or coerced. `message` may be empty. Use `.safeParse()` to
+handle invalid data without throwing.
