@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.1.0",
   "packageManager": "pnpm@10.24.0",
-  "description": "A TypeScript npm library template powered by tsdown.",
+  "description": "Lightweight, framework-agnostic API schemas and types powered by Zod.",
   "author": "RingoTangs",
   "license": "MIT",
   "homepage": "https://github.com/RingoTangs/api-shapes#readme",
