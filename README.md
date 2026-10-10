@@ -1,5 +1,7 @@
 # @ringotangs/api-shapes
 
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
 ## Introduction
 
 Lightweight, framework-agnostic API schemas and types powered by Zod.
