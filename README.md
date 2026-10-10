@@ -100,45 +100,48 @@ Both fields are required strings and may be empty. Neither field is trimmed
 or coerced. Use `.safeParse()` to
 handle invalid data without throwing.
 
-### Default error details
+### Business extensions
+
+The base Schema preserves undeclared fields without validating their values:
 
 ```ts
-import { errorWithDetailsSchema } from 'api-shapes'
-import { z } from 'zod'
+import { errorSchema } from 'api-shapes'
 
-type ErrorWithDetails = z.infer<typeof errorWithDetailsSchema>
-
-const error: ErrorWithDetails = errorWithDetailsSchema.parse({
-  code: 'VALIDATION_ERROR',
-  message: 'Invalid input',
-  details: [{ key: 'email', value: 'Invalid email format' }],
+errorSchema.parse({
+  code: 'NOT_FOUND',
+  message: 'Resource not found',
+  traceId: 'trace-1',
 })
+// traceId is preserved; its inferred type is unknown.
 ```
 
-`details` is optional and may be an empty array. Each default detail has required
-string fields `key` and `value`, which may be empty. The package also exports
-`errorDetailSchema` and its inferred `ErrorDetail` type.
-
-### Custom error details
+Use `.extend()` to validate business fields and infer their specific types:
 
 ```ts
-import { createErrorSchema } from 'api-shapes'
+import { errorSchema } from 'api-shapes'
 import { z } from 'zod'
 
-const customSchema = createErrorSchema(
-  z.object({
-    field: z.string(),
-    reason: z.string(),
-  }),
-)
-type CustomError = z.infer<typeof customSchema>
+const validationErrorSchema = errorSchema.extend({
+  details: z
+    .array(
+      z.object({
+        field: z.string(),
+        reason: z.string(),
+      }),
+    )
+    .optional(),
+})
+type ValidationError = z.infer<typeof validationErrorSchema>
 
-const error: CustomError = customSchema.parse({
+const error: ValidationError = validationErrorSchema.parse({
   code: 'VALIDATION_ERROR',
   message: 'Invalid input',
   details: [{ field: 'email', reason: 'Invalid email format' }],
 })
 ```
 
-The factory extends `errorSchema` with an optional array of your detail
-schema, preserving its validation and inferred types.
+This example makes `details` optional and allows an empty array. Its shape is
+chosen by the application; api-shapes does not prescribe a detail format.
+This extension approach is inspired by
+[RFC 9457 extension members](https://www.rfc-editor.org/rfc/rfc9457.html#section-3.2).
+The `{ code, message }` format is not an RFC 9457 Problem Details format.

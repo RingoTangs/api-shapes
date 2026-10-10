@@ -1,14 +1,9 @@
-import type { ErrorDetail, ErrorResponse } from './index'
+import type { ErrorResponse } from './index'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { z } from 'zod'
 
-import {
-  createErrorSchema,
-  errorDetailSchema,
-  errorSchema,
-  errorWithDetailsSchema,
-} from './index'
+import { errorSchema } from './index'
 
 describe('errorSchema', () => {
   it('accepts an error response', () => {
@@ -53,6 +48,7 @@ describe('errorSchema', () => {
 
   it('infers required string fields', () => {
     expectTypeOf<ErrorResponse>().toEqualTypeOf<{
+      [key: string]: unknown
       code: string
       message: string
     }>()
@@ -62,118 +58,69 @@ describe('errorSchema', () => {
   })
 })
 
-describe('errorWithDetailsSchema', () => {
-  const base = { code: 'VALIDATION_ERROR', message: 'Invalid input' }
-
-  it('accepts omitted, undefined, or empty details', () => {
-    expect(errorWithDetailsSchema.parse(base)).toEqual(base)
-    expect(
-      errorWithDetailsSchema.parse({ ...base, details: undefined }),
-    ).toEqual({
-      ...base,
-      details: undefined,
-    })
-    expect(errorWithDetailsSchema.parse({ ...base, details: [] })).toEqual({
-      ...base,
-      details: [],
-    })
-  })
-
-  it('validates default details including empty strings', () => {
-    const details = [
-      { key: 'email', value: 'Invalid email' },
-      { key: '', value: '' },
-    ]
-    expect(errorWithDetailsSchema.parse({ ...base, details })).toEqual({
-      ...base,
-      details,
-    })
-    expect(errorDetailSchema.parse(details[0])).toEqual(details[0])
-  })
-
-  it('preserves base field validation', () => {
-    expect(errorWithDetailsSchema.parse({ code: '', message: '' })).toEqual({
-      code: '',
-      message: '',
-    })
-    for (const invalid of [
-      {},
-      { code: 'E' },
-      { message: 'Error' },
-      { code: 1, message: 'Error' },
-      { code: 'E', message: null },
-    ]) {
-      expect(errorWithDetailsSchema.safeParse(invalid).success).toBe(false)
-    }
-  })
-
-  it.each([
-    null,
-    'invalid',
-    {},
-    1,
-    true,
-    [null],
-    ['invalid'],
-    [{}],
-    [{ key: 'email' }],
-    [{ value: 'Error' }],
-    [{ key: 1, value: 'Error' }],
-    [{ key: 'email', value: false }],
-    [{ key: 'email', value: 'Error' }, { key: 'name' }],
-  ])('rejects invalid details %j', (details) => {
-    expect(errorWithDetailsSchema.safeParse({ ...base, details }).success).toBe(
-      false,
-    )
-  })
-
-  it('infers default detail and response types', () => {
-    expectTypeOf<ErrorDetail>().toEqualTypeOf<{ key: string; value: string }>()
-    expectTypeOf<z.infer<typeof errorWithDetailsSchema>>().toEqualTypeOf<{
-      code: string
-      message: string
-      details?: ErrorDetail[] | undefined
-    }>()
-  })
-})
-
-describe('createErrorSchema', () => {
-  it('validates and infers custom details', () => {
-    const schema = createErrorSchema(
-      z.object({ field: z.string(), reason: z.string() }),
-    )
+describe('errorSchema extensions', () => {
+  it('preserves undeclared business fields', () => {
     const response = {
-      code: 'VALIDATION_ERROR',
-      message: 'Invalid input',
+      code: 'ERROR',
+      message: 'Error',
+      retryable: true,
+      retryAfter: 30,
+      traceId: 'trace-1',
+      context: { operation: 'save' },
       details: [{ field: 'email', reason: 'Invalid email' }],
     }
-    expect(schema.parse(response)).toEqual(response)
-    expect(
-      schema.safeParse({ ...response, details: [{ field: 'email' }] }).success,
-    ).toBe(false)
-    expect(
-      schema.safeParse({
-        ...response,
-        details: [{ field: 'email', reason: 1 }],
-      }).success,
-    ).toBe(false)
+    expect(errorSchema.parse(response)).toEqual(response)
+  })
+
+  it('validates and infers declared optional details', () => {
+    const schema = errorSchema.extend({
+      details: z
+        .array(z.object({ field: z.string(), reason: z.string() }))
+        .optional(),
+    })
+    const base = { code: 'VALIDATION_ERROR', message: 'Invalid input' }
+    const details = [{ field: 'email', reason: 'Invalid email' }]
+    expect(schema.parse(base)).toEqual(base)
+    expect(schema.parse({ ...base, details })).toEqual({ ...base, details })
+    expect(schema.parse({ ...base, details: [], traceId: 'trace-1' })).toEqual({
+      ...base,
+      details: [],
+      traceId: 'trace-1',
+    })
+    for (const invalid of [
+      null,
+      {},
+      'invalid',
+      [{}],
+      [{ field: 'email' }],
+      [{ field: 'email', reason: 1 }],
+    ]) {
+      expect(schema.safeParse({ ...base, details: invalid }).success).toBe(
+        false,
+      )
+    }
     expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<{
+      [key: string]: unknown
       code: string
       message: string
       details?: { field: string; reason: string }[] | undefined
     }>()
   })
 
-  it('preserves transformed detail input and output types', () => {
-    const schema = createErrorSchema(
-      z.string().transform((value) => value.length),
-    )
+  it('preserves transformed extension input and output types', () => {
+    const schema = errorSchema.extend({
+      details: z
+        .array(z.string().transform((value) => value.length))
+        .optional(),
+    })
     expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<{
+      [key: string]: unknown
       code: string
       message: string
       details?: string[] | undefined
     }>()
     expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<{
+      [key: string]: unknown
       code: string
       message: string
       details?: number[] | undefined

@@ -1,10 +1,5 @@
-export {
-  createErrorSchema,
-  errorDetailSchema,
-  errorSchema,
-  errorWithDetailsSchema,
-} from './error'
-export type { ErrorDetail, ErrorResponse } from './error'
+export { errorSchema } from './error'
+export type { ErrorResponse } from './error'
 export {
   createPageQuerySchema,
   createPageSchema,
