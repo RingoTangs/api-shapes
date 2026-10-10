@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      zod:
-        specifier: ^4.6.5
-        version: 4.6.5
     devDependencies:
       '@antfu/eslint-config':
         specifier: 8.3.0
@@ -45,6 +41,9 @@ importers:
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@22.20.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@22.20.4)(yaml@2.8.3))
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
 packages:
 

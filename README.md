@@ -5,8 +5,11 @@ Lightweight, framework-agnostic API schemas and types powered by Zod.
 ## Installation
 
 ```sh
-pnpm add api-shapes zod
+pnpm add api-shapes zod@^4.6.5
 ```
+
+Zod is a required peer dependency provided by your application. The supported
+version range is `^4.6.5`.
 
 ## Pagination requests
 
