@@ -1,8 +1,13 @@
-import type { PaginationQuery, PaginationQueryInput } from './index'
+import type {
+  PaginationOptions,
+  PaginationQuery,
+  PaginationQueryInput,
+} from './index'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { z } from 'zod'
 import {
+  createPaginationQuerySchema,
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
@@ -84,6 +89,110 @@ describe('paginationQuerySchema', () => {
   })
 })
 
+describe('createPaginationQuerySchema', () => {
+  it('preserves defaults with omitted or empty options', () => {
+    for (const schema of [
+      createPaginationQuerySchema(),
+      createPaginationQuerySchema({}),
+      createPaginationQuerySchema({
+        defaultPage: undefined,
+        defaultPageSize: undefined,
+        maxPageSize: undefined,
+      }),
+    ]) {
+      expect(schema.parse({})).toEqual({ page: 1, pageSize: 10 })
+      expect(schema.safeParse({ pageSize: 101 }).success).toBe(false)
+    }
+  })
+
+  it('uses custom defaults and an inclusive maximum', () => {
+    const schema = createPaginationQuerySchema({
+      defaultPage: 3,
+      defaultPageSize: 20,
+      maxPageSize: 200,
+    })
+    expect(schema.parse({})).toEqual({ page: 3, pageSize: 20 })
+    expect(schema.parse({ page: '1', pageSize: '200' })).toEqual({
+      page: 1,
+      pageSize: 200,
+    })
+    expect(schema.parse({ pageSize: 1 }).pageSize).toBe(1)
+    expect(schema.safeParse({ pageSize: 201 }).success).toBe(false)
+  })
+
+  it('fills omitted options and keeps instances independent', () => {
+    expect(createPaginationQuerySchema({ defaultPage: 2 }).parse({})).toEqual({
+      page: 2,
+      pageSize: 10,
+    })
+    expect(
+      createPaginationQuerySchema({ defaultPageSize: 50 }).parse({}),
+    ).toEqual({ page: 1, pageSize: 50 })
+    expect(
+      createPaginationQuerySchema({ maxPageSize: 200 }).parse({ pageSize: 200 })
+        .pageSize,
+    ).toBe(200)
+    const small = createPaginationQuerySchema({
+      defaultPageSize: 5,
+      maxPageSize: 5,
+    })
+    const large = createPaginationQuerySchema({
+      defaultPageSize: 200,
+      maxPageSize: 200,
+    })
+    expect(small.parse({})).toEqual({ page: 1, pageSize: 5 })
+    expect(small.safeParse({ pageSize: 6 }).success).toBe(false)
+    expect(large.parse({})).toEqual({ page: 1, pageSize: 200 })
+    expect(paginationQuerySchema.parse({})).toEqual({ page: 1, pageSize: 10 })
+  })
+
+  describe.each(['defaultPage', 'defaultPageSize', 'maxPageSize'] as const)(
+    '%s',
+    (field) => {
+      it.each([0, -1, 1.5, Number.NaN, Infinity, -Infinity])(
+        'rejects invalid configuration %s immediately',
+        (value) => {
+          expect(() => createPaginationQuerySchema({ [field]: value })).toThrow(
+            z.ZodError,
+          )
+        },
+      )
+    },
+  )
+
+  it('rejects a default page size greater than the maximum without clamping', () => {
+    for (const options of [
+      { defaultPageSize: 101 },
+      { maxPageSize: 5 },
+      { defaultPageSize: 20, maxPageSize: 10 },
+    ]) {
+      expect(() => createPaginationQuerySchema(options)).toThrow(z.ZodError)
+    }
+    try {
+      createPaginationQuerySchema({ maxPageSize: 5 })
+    } catch (error) {
+      expect(error).toBeInstanceOf(z.ZodError)
+      if (error instanceof z.ZodError) {
+        expect(error.issues[0]?.path).toEqual(['defaultPageSize'])
+      }
+    }
+  })
+
+  it('preserves input and output types and supports extension', () => {
+    expectTypeOf<PaginationOptions>().toEqualTypeOf<{
+      defaultPage?: number | undefined
+      defaultPageSize?: number | undefined
+      maxPageSize?: number | undefined
+    }>()
+    const schema = createPaginationQuerySchema({ maxPageSize: 200 })
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<PaginationQueryInput>()
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<PaginationQuery>()
+    expect(
+      schema.extend({ search: z.string() }).parse({ search: 'Ada' }),
+    ).toEqual({ page: 1, pageSize: 10, search: 'Ada' })
+  })
+})
+
 describe('paginatedResponseSchema', () => {
   const itemSchema = z.object({ id: z.string(), name: z.string() })
   const responseSchema = paginatedResponseSchema(itemSchema)
@@ -115,7 +224,7 @@ describe('paginatedResponseSchema', () => {
       total: 0,
     })
     expect(
-      responseSchema.safeParse({ ...response, pageSize: MAX_PAGE_SIZE })
+      responseSchema.safeParse({ ...response, pageSize: MAX_PAGE_SIZE + 1 })
         .success,
     ).toBe(true)
   })
@@ -138,7 +247,6 @@ describe('paginatedResponseSchema', () => {
     { pageSize: 0 },
     { pageSize: -1 },
     { pageSize: 1.5 },
-    { pageSize: 101 },
     { pageSize: '10' },
     { total: -1 },
     { total: 1.5 },

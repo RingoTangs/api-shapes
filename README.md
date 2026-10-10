@@ -32,6 +32,31 @@ Use `.safeParse()` when you prefer a result instead of an exception.
 
 The package exports `DEFAULT_PAGE`, `DEFAULT_PAGE_SIZE`, and `MAX_PAGE_SIZE`.
 
+### Custom pagination options
+
+```ts
+import { createPaginationQuerySchema } from 'api-shapes'
+
+const querySchema = createPaginationQuerySchema({
+  defaultPage: 1,
+  defaultPageSize: 20,
+  maxPageSize: 200,
+})
+
+querySchema.parse({})
+// { page: 1, pageSize: 20 }
+querySchema.parse({ page: '2', pageSize: '200' })
+// { page: 2, pageSize: 200 }
+```
+
+All options are optional and fall back to 1, 10, and 100 respectively. They
+must be positive integers, with `defaultPageSize <= maxPageSize`; invalid
+configuration throws a Zod error when the factory is called. Defaults are not
+clamped: setting `maxPageSize` below 10 also requires a compatible
+`defaultPageSize`. The minimum request page remains 1 regardless of its default.
+Each factory call creates an independent Schema that can be extended with
+`.extend()`. The package exports the `PaginationOptions` type.
+
 ## Pagination responses
 
 ```ts
@@ -54,7 +79,7 @@ const response: UsersPage = usersPageSchema.parse({
 ```
 
 All four response fields are required. `page` is a positive integer,
-`pageSize` is an integer from 1 to 100, and `total` is a nonnegative integer.
+`pageSize` is a positive integer with no configured maximum, and `total` is a nonnegative integer.
 Response numbers are not coerced. Empty `items` are allowed; the schema does
 not enforce relationships between the pagination fields and item count.
 
